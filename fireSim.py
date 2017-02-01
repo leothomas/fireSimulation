@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 
 def gen_map(tsize):
 	return norm_terrain(terrain_layer(tsize,tsize) + \
-		terrain_layer(tsize,tsize/2) + terrain_layer(tsize,tsize/4))
+		terrain_layer(tsize,tsize/2)\
+		+ 0.5*terrain_layer(tsize,tsize/4)
+		)
 
 def terrain_layer(tsize, res):
 	terrain = np.zeros((tsize,tsize))
@@ -104,18 +106,19 @@ def norm_terrain(terrain):
 		for j in range(len(terrain[0])):
 			terrain[i,j] = terrain[i,j]/tmax
 	return terrain
-
+"""
 def probability(val):
 	size=1000
 	p = np.random.beta(5,3,size)
-	plt.figure(4)
+
 	count,bins,ignored=plt.hist(p,25, normed = False)
+	
 	prob = count[int(val/4)]
 	if np.random.randint(low=0,high=101) <= prob:
 		return True
 	else:
 		return False
-
+"""
 def find_neighbors(i,j,tsize):
 	
 	neighbors = np.array([[i-1,j-1],[i-1,j],[i-1,j+1],[i,j-1],[i,j+1],[i+1,j-1],[i+1,j],[i+1,j+1]])
@@ -125,9 +128,8 @@ def find_neighbors(i,j,tsize):
 def neighbors_burning(neighbors,burn):
 	burning=0
 	for n in neighbors:
-		if burn[n[0],n[1]] >= 0:
+		if burn[n[0],n[1]] > 0:
 			burning = burning + 1
-
 	return burning
 
 def spreadFire(terrain, i,j):
@@ -135,65 +137,131 @@ def spreadFire(terrain, i,j):
 	burn = np.zeros((len(terrain)+1,len(terrain)+1))
 	burn[i,j] = burn[i,j]+1
 	queue = find_neighbors(i,j,len(terrain))
-	visited = np.array([[i,j]])
+	for n in queue: burn[n[0],n[1]] = burn[n[0],n[1]] +1
+	
+	visited = np.zeros((len(terrain),len(terrain)))
 
 	size=1000
-	p = np.random.beta(5,3,size)
-	plt.figure(4)
+	p = np.random.beta(7,3,size)
+	plt.figure(1)
 	count,bins,ignored=plt.hist(p,100, normed = False)
 
+	#plt.ion()
+	#plt.show()
+	maxVisit = 50
+	maxVisited = 0
 	while len(queue) != 0:
-		#print (queue)
-		print (len(queue))
-		print (len(visited))
+		
 		x=queue[0,0] 
 		y=queue[0,1] 
 		
+		queue = np.delete(queue, 0,0)
+
 		neighbors = find_neighbors(x,y, len(terrain))
+		
 		burning = neighbors_burning(neighbors,burn)
 		
-		for n in neighbors:
-			if n not in visited and n not in queue:
-				queue = np.append(queue,[n], axis=0)
+		if burning == 0: continue
+		if visited[x,y] > maxVisit: continue
 
-		#print (queue)
+		#print ("point: ", (x,y))
+		#print ("visited: ",visited)
+		#print ("burning: ", burning)
+		np.random.shuffle(neighbors)
+		for n in neighbors:
+			if n not in queue:
+				queue = np.append(queue,[n], axis=0)
+				queue = np.append(queue,[[x,y]], axis = 0)
 		
-		visited = np.append(visited, queue[0])
-		
+		visited[x,y] = visited[x,y]+1
+
+		if visited[x,y]> maxVisited: 
+			#print ("Current Max Number of Visits: ", maxVisited)
+			maxVisited = visited[x,y]
 		#queue = np.array([queue[n] for n in range(1,len(queue))])
-		queue = np.delete(queue, 0,0)
-		#print (queue)
 		
 		prob = count[terrain[x,y]]
 
-		if np.random.randint(low=0,high=101)<= (prob*burning):
+		if np.random.randint(low=0,high=50) <= (prob*burning):
+		#if np.random.choice([True, False]) == True:
 			burn[x,y] = burn[x,y] + 1
+		
+		for i in range(0,len(terrain)):
+			for j in range(0,len(terrain)):
+				if burn[i,j] > 0 : burn[i,j] = burn[i,j] + 1
+ 		
+		"""
+		plt.imshow(burn, cmap=plt.get_cmap('hot'))
+		plt.draw()
+		#title = (str((x,y)))
+		#plt.title(title)
+		#plt.pause(0.00001)
+		"""
 
 	return burn
-"""
-tmap = gen_map(100)
-plt.figure(1)
+
+
+loadMap = True
+mapsize = 100
+
+if(loadMap):
+	try:
+		print ("\n loading terrain map...\n ")
+		tmap = np.load("TerrainMap.npy")
+		
+		print ("\n loading burn map... \n")
+		burn = np.load("BurnMap.npy")
+		startCoord = np.load("StartCoord.npy")
+
+	except: 
+		print ("\n unable to load terrain, generating a new one... \n")
+		tmap = gen_map(mapsize)
+		np.save("TerrainMap", tmap)
+
+		print ("\n unable to load burn map, generating new one... \n")
+		
+		print ("\n Generating BurnMap...")
+		startx = int(np.random.normal(mapsize/2, mapsize/4))
+		starty = int(np.random.normal(mapsize/2, mapsize/4))
+
+		print ("\n Starting point: (%d, %d)" % (startx, starty))
+		burn = spreadFire(tmap,starty, startx)
+		np.save("BurnMap", burn)
+		np.save("StartCoord", [startx,starty])
+
+
+else:
+	print ("\n Generating terrain map...")
+	tmap = gen_map(mapsize)
+	np.save("TerrainMap", tmap)
+
+	print ("\n Generating BurnMap...")
+	startx = int(np.random.normal(mapsize/2, mapsize/4))
+	starty = int(np.random.normal(mapsize/2, mapsize/4))
+
+	print ("\n Starting point: (%d, %d)" % (startx, starty))
+
+	burn = spreadFire(tmap,starty, startx)
+	np.save("BurnMap", burn)
+	np.save("StartCoord", [startx,starty])
+
+plt.figure()
 plot1 = plt.imshow(tmap, interpolation="bicubic", cmap = plt.get_cmap('BuGn'))
-plt.figure(2)
+
+plt.figure()
 plot2 = plt.imshow(tmap, interpolation="bicubic", cmap=plt.get_cmap('BrBG'))
-plt.figure(3)
+
+plt.figure()
 plot3 = plt.imshow(tmap, interpolation='bicubic')
-#tmap.set_cmap('hot')
 
-burn = spreadFire(tmap, 40,40)
 
-plt.figure(5)
-plot5 = plt.imshow(burn, cmap=plt.get_cmap('hot'))
-print (probability(70))
+plt.figure()
+plot5 = plt.imshow(burn, cmap=plt.get_cmap('OrRd'))
+plt.title("Starting point: (%d, %d) " %(startCoord[0], startCoord[1]))
+clevels = np.unique(burn)
+plt.contour(burn, levels= clevels)
 
-"""
-queue = np.array([[90,90],[91,90],[91,89],[92,89]])
-print (queue)
-n = [40,29]
-queue = np.append(queue,[n],0)
-print (queue)
-if n not in queue:
-	queueu = np.append(queue,[n],0)
-print (queue)
+
 
 plt.show()
+
