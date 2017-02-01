@@ -202,7 +202,9 @@ def spreadFire(terrain, i,j):
 
 
 loadMap = True
-mapsize = 100
+mapsize = 50
+
+startCood = np.array([])
 
 if(loadMap):
 	try:
@@ -253,13 +255,18 @@ plot2 = plt.imshow(tmap, interpolation="bicubic", cmap=plt.get_cmap('BrBG'))
 
 plt.figure()
 plot3 = plt.imshow(tmap, interpolation='bicubic')
+clevels = np.linspace(0, np.amax(burn), num=3)
+plt.contour(burn, levels= clevels, colors ='k')
+
 
 
 plt.figure()
 plot5 = plt.imshow(burn, cmap=plt.get_cmap('OrRd'))
 plt.title("Starting point: (%d, %d) " %(startCoord[0], startCoord[1]))
-clevels = np.unique(burn)
-plt.contour(burn, levels= clevels)
+
+
+plt.figure()
+plt.contour(burn, levels = clevels)
 
 
 
