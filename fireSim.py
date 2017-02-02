@@ -255,19 +255,15 @@ plot2 = plt.imshow(tmap, interpolation="bicubic", cmap=plt.get_cmap('BrBG'))
 
 plt.figure()
 plot3 = plt.imshow(tmap, interpolation='bicubic')
-clevels = np.linspace(0, np.amax(burn), num=3)
-plt.contour(burn, levels= clevels, colors ='k')
+clevels = np.linspace(0, np.amax(tmap), num=3)
+#plt.contour(burn, levels= clevels, colors ='k')
 
 
 
 plt.figure()
 plot5 = plt.imshow(burn, cmap=plt.get_cmap('OrRd'))
 plt.title("Starting point: (%d, %d) " %(startCoord[0], startCoord[1]))
-
-
-plt.figure()
-plt.contour(burn, levels = clevels)
-
+plt.contour(tmap, colors='k')
 
 
 plt.show()
