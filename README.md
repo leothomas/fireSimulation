@@ -5,6 +5,8 @@ Simulation of a forest fire spreading
   - Each cell catches on fire with a probability based on its density and the number of its neighbor cells 
     that are on fire. (Beta distribution: highest probability around 70% density, goes to to 0 
     at 0% density and goes to approx half of peak probability at 100% density)
+  - See heatMap100.jpeg for an example of randomly generated coherent tree density map, and BurnMap.jpeg 
+    for heatmap of of the fire's course, overlayed with contour lines representing the original tree density
   
   To implement: 
    - Wind vector: neighbor's contribution to the probability of the cell catching fire should be multiplied 
